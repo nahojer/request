@@ -67,10 +67,10 @@ func (r *Request) WithBody(b io.Reader) *Request {
 
 // WithJSONBody sets the body of the request to the JSON representation of data and
 // the Content-Type header to application/json.
-func (r *Request) WithJSONBody(data any) *Request {
+func (r *Request) WithJSONBody(v any) *Request {
 	pr, pw := io.Pipe()
 	go func() {
-		pw.CloseWithError(json.NewEncoder(pw).Encode(data))
+		pw.CloseWithError(json.NewEncoder(pw).Encode(v))
 	}()
 	r.body = pr
 	r.header.Set("Content-Type", jsonMIME)
@@ -79,10 +79,10 @@ func (r *Request) WithJSONBody(data any) *Request {
 
 // WithXMLBody sets the body of the request to the XML representation of data and
 // the Content-Type header to application/xml.
-func (r *Request) WithXMLBody(data any) *Request {
+func (r *Request) WithXMLBody(v any) *Request {
 	pr, pw := io.Pipe()
 	go func() {
-		pw.CloseWithError(xml.NewEncoder(pw).Encode(data))
+		pw.CloseWithError(xml.NewEncoder(pw).Encode(v))
 	}()
 	r.body = pr
 	r.header.Set("Content-Type", xmlMIME)
