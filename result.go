@@ -7,7 +7,8 @@ import (
 	"net/http"
 )
 
-// Result represents the result from sending a HTTP request.
+// Result represents the result from sending a HTTP request and reading the
+// response body.
 type Result struct {
 	// The HTTP response from sending a HTTP request with response body read to
 	// completion and closed. Attempting to read from the body will result in an
@@ -34,19 +35,19 @@ func (wr *withResult) Do(ctx context.Context, method, url string) (*Result, erro
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	if wr.unmarshal != nil {
-		if err := wr.unmarshal(body); err != nil {
+		if err := wr.unmarshal(data); err != nil {
 			return nil, err
 		}
 	}
 
 	return &Result{
 		Response: resp,
-		RawData:  body,
+		RawData:  data,
 	}, nil
 }
