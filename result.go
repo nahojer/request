@@ -20,13 +20,13 @@ type Result struct {
 
 // withResult allows for returning a Result after sending a HTTP request. It is
 // a convenient way for the consumer of the package to not have to write the
-// logic to read and unmarshal the response body.
+// logic to read and decode the response body.
 type withResult struct {
 	req       *Request
 	unmarshal func(data []byte) error
 }
 
-// Do sends an HTTP request and returns a Result containing a HTTP response
+// Do sends an HTTP request and returns a [Result] containing a HTTP response
 // and its raw data from reading and closing the response body.
 func (wr *withResult) Do(ctx context.Context, method, url string) (*Result, error) {
 	resp, err := wr.req.Do(ctx, method, url)
