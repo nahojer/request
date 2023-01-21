@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/nahojer/request"
@@ -60,4 +61,43 @@ func Example() {
 	// Output:
 	// Status: 200
 	// Body: {"message":"This is an example."}
+}
+
+func Example_withJSONResult() {
+	// HTTP client repeating whatever is in the request body. We override the
+	// transport for the purpose of not sending real HTTP requests in this
+	// example.
+	echolaliaClient := http.Client{
+		Timeout: time.Second * 5,
+		Transport: RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       r.Body,
+			}, nil
+		}),
+	}
+
+	// We attach our custom client to ctx for the builder to use.
+	ctx := request.AttachClientToContext(context.Background(), &echolaliaClient)
+
+	type payload struct {
+		Message string `json:"message"`
+	}
+
+	var respData payload
+	res, err := request.New().
+		WithJSONBody(&payload{"This is an example."}).
+		WithJSONResult(&respData).
+		Do(ctx, http.MethodPost, "http://localhost")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Status: %d\n", res.Response.StatusCode)
+	fmt.Printf("Body: %s\n", strings.TrimSpace(string(res.RawData)))
+	fmt.Printf("Message: %s\n", respData.Message)
+	// Output:
+	// Status: 200
+	// Body: {"message":"This is an example."}
+	// Message: This is an example.
 }

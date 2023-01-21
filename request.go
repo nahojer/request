@@ -13,6 +13,13 @@ import (
 	"time"
 )
 
+// HTTP MIME types.
+const (
+	wildcardMIME = "*/*"
+	jsonMIME     = "application/json"
+	xmlMIME      = "application/xml"
+)
+
 // DefaultClientTimeout holds the timeout value for the default HTTP client.
 var DefaultClientTimeout = time.Minute * 1
 
@@ -66,7 +73,7 @@ func (r *Request) WithJSONBody(data any) *Request {
 		pw.CloseWithError(json.NewEncoder(pw).Encode(data))
 	}()
 	r.body = pr
-	r.header.Set("Content-Type", "application/json")
+	r.header.Set("Content-Type", jsonMIME)
 	return r
 }
 
@@ -78,7 +85,7 @@ func (r *Request) WithXMLBody(data any) *Request {
 		pw.CloseWithError(xml.NewEncoder(pw).Encode(data))
 	}()
 	r.body = pr
-	r.header.Set("Content-Type", "application/xml")
+	r.header.Set("Content-Type", xmlMIME)
 	return r
 }
 
@@ -118,4 +125,48 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 func (r *Request) WithBearerAuthentication(token string) *Request {
 	r.header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	return r
+}
+
+// WithResult returns a request client who's Do func returns a [Result] instead
+// of the raw HTTP response.
+func (r *Request) WithResult() *withResult {
+	return &withResult{req: r}
+}
+
+// WithJSONResult sets the Accept header of the request to application/json
+// if the header is not already set, and returns a HTTP client who's Do func
+// returns a [Result] instead of the raw HTTP response and decodes the JSON
+// response body into v.
+func (r *Request) WithJSONResult(v any) *withResult {
+	if accept := r.header.Get("Accept"); accept == "" {
+		r.header.Set("Accept", jsonMIME)
+	}
+	return &withResult{
+		req: r,
+		unmarshal: func(data []byte) error {
+			if err := json.Unmarshal(data, v); err != nil {
+				return fmt.Errorf("failed to unmarshal JSON: %w", err)
+			}
+			return nil
+		},
+	}
+}
+
+// WithXMLResult sets the Accept header of the request to application/xml
+// if the header is not already set, and returns a HTTP client who's Do func
+// returns a [Result] instead of the raw HTTP response and decodes the XML
+// response body into v.
+func (r *Request) WithXMLResult(v any) *withResult {
+	if accept := r.header.Get("Accept"); accept == "" {
+		r.header.Set("Accept", xmlMIME)
+	}
+	return &withResult{
+		req: r,
+		unmarshal: func(data []byte) error {
+			if err := xml.Unmarshal(data, v); err != nil {
+				return fmt.Errorf("failed to unmarshal JSON: %w", err)
+			}
+			return nil
+		},
+	}
 }
