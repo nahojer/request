@@ -112,6 +112,12 @@ func (r *Request) WithContentType(s string) *Request {
 	return r
 }
 
+// WithAccept sets the Accept header of the request to s.
+func (r *Request) WithAccept(s string) *Request {
+	r.header.Set("Accept", s)
+	return r
+}
+
 // WithBasicAuth sets the request's Authorization header to use HTTP Basic
 // Authentication with the provided username and password.
 func (r *Request) WithBasicAuth(username, password string) *Request {
